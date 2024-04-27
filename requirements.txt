@@ -1,0 +1,3 @@
+pylint[spelling]
+pyflakes
+flask
