@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block head %}{% endblock %}
+{% block css %}{% endblock %}
+{% block content %}
+<div class="container col-xl-10 col-xxl-8 px-4 py-5">
+    <div class="row align-items-center g-lg-5 py-5">
+
+        <div class="col-md-10 mx-auto col-lg-5">
+            <form class="p-4 p-md-5 border rounded-3 bg-body-tertiary" method="post">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="floatingInput" placeholder="Anos voldegod" name="username"> 
+                    <label for="floatingInput">
+                        <i class="fas fa-user"></i>
+                        Username
+                    </label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password">
+                    <label for="floatingPassword">
+                        <i class="fas fa-key"></i>
+                        Password</label>
+                </div>
+                <div class="checkbox mb-3">
+                    <label>
+                        <input type="checkbox" value="remember-me"> Remember me
+                    </label>
+                </div>
+                <button class="w-100 btn btn-lg btn-primary" type="submit">
+                    <i class="fas fa-sign-in"></i>
+                    Sign In
+                </button>
+                <hr class="my-4">
+                <small class="text-body-secondary">By clicking Sign in, you agree to the terms of use.</small>
+            </form>
+        </div>
+        <div class="col-lg-7 text-center text-lg-start">
+            <h1 class="display-4 fw-bold lh-1 text-body-emphasis mb-3">
+                Continue to your account
+            </h1>
+            <p class="col-lg-10 fs-4">
+                Why Pyshield? Pyshield is a platform that allows you to upload your code and remove unwanted code from
+                your codebase.
+                <br>
+                <a href="/register" class="btn  btn-lg mt-3 px-0">Dont have an account? 
+                    <span class="text-primary">Create one</span>
+                </a>
+            </p>
+            <!-- create account -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block js %}{% endblock %}

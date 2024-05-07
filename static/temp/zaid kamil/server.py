@@ -7,9 +7,8 @@ import zipfile
 import shutil
 from werkzeug.utils import secure_filename
 from datetime import datetime
-from scan import analyze_code
+
 import os
-import json
 
 os.makedirs('static', exist_ok=True)
 os.makedirs('templates', exist_ok=True)
@@ -19,14 +18,16 @@ os.makedirs('static/img', exist_ok=True)
 os.makedirs('static/source_code', exist_ok=True)
 os.makedirs('static/temp', exist_ok=True)
 
+
 app = Flask(__name__)
 
 app.secret_key = 'super secret key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shield.sqlite3'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SRC_FOLDER'] = 'static/source_code'
 app.config['TEMP_FOLDER'] = 'static/temp'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['ALLOWED_EXTENSIONS'] = ['zip']
+app.config['ALLOWED_EXTENSIONS'] = {'zip'}
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -55,22 +56,31 @@ class Report(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
 def allowed_file(filename):
-    ext = '.' in filename and filename.rsplit('.', 1)[1].lower()
-    print(ext)
-    return ext in app.config['ALLOWED_EXTENSIONS']
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def unzip_src_code(zip_file, folder):
-    temp_folder = app.config['TEMP_FOLDER']                                        # temp folder                                                 # create source code folder if not exists
-    os.makedirs(temp_folder, exist_ok=True)
-    os.makedirs(os.path.join(temp_folder, "".join(folder.split())), exist_ok=True)                  # create folder for source code    
-    # extract all files
-    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-        zip_ref.extractall(os.path.join(temp_folder, folder))
-    return os.path.join(temp_folder, folder)
+def unzip_src_code(zip_file, name):
+    src_folder = app.config['SRC_FOLDER']                                                       # source code folder
+    temp_folder = app.config['TEMP_FOLDER']                                                     # temp folder
+    os.makedirs(src_folder, exist_ok=True)                                                      # create source code folder if not exists
+    os.makedirs(temp_folder, exist_ok=True)                                                     # create temp folder if not exists  
+    zip_file.save(os.path.join(temp_folder, zip_file.filename))                                 # save zip file to temp folder
+    with zipfile.ZipFile(os.path.join(temp_folder, zip_file.filename), 'r') as zip_ref:         # open zip file
+        zip_ref.extractall(src_folder)                                                          # extract zip file to source code folder  
+    os.rename(os.path.join(src_folder, zip_file.filename.rsplit('.', 1)[0]), os.path.join(src_folder, name))    # rename folder
+    
+def scan_src_code(name):
+    src_folder = app.config['SRC_FOLDER']                                                       # source code folder
+    temp_folder = app.config['TEMP_FOLDER']                                                     # temp folder
+    os.makedirs(src_folder, exist_ok=True)                                                      # create source code folder if not exists
+    os.makedirs(temp_folder, exist_ok=True)                                                     # create temp folder if not exists  
+    os.system(f'python3 scan.py {os.path.join(src_folder, name)}')                              # run scan.py script
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
 
 @app.route('/')
 def index():
@@ -124,8 +134,8 @@ def logout():
 @login_required
 def dashboard():
     source_codes = SourceCode.query.filter_by(user_id=current_user.id).all()
-    print(len(source_codes))
-    return render_template('dashboard.html', source_codes=source_codes)
+    reports = Report.query.join(SourceCode).filter(SourceCode.user_id==current_user.id).all()
+    return render_template('dashboard.html', source_codes=source_codes, reports=reports)
 
 # upload zip file
 @app.route('/upload', methods=['GET', 'POST'])
@@ -136,13 +146,12 @@ def upload():
         zip_file = request.files['zip_file']
         if zip_file and allowed_file(zip_file.filename):
             try:
-                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-                zip_file_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(zip_file.filename))
-                zip_file.save(zip_file_path)
-                source_code = SourceCode(name=name, user_id=current_user.id, zip_file=zip_file_path)
+                source_code = SourceCode(name=name, user_id=current_user.id, zip_file=zip_file.filename)
                 db.session.add(source_code)
                 db.session.commit()
-                flash('Source code uploaded successfully!', 'info')
+                unzip_src_code(zip_file, name)
+                scan_src_code(name)
+                flash('Source code uploaded successfully!', 'success')
                 return redirect('/dashboard')
             except Exception as e:
                 print(e)
@@ -153,28 +162,7 @@ def upload():
             return redirect('/upload')
     return render_template('upload.html')
 
-@app.route('/analyse/<int:srcid>', methods=['GET'])
-def analyse_files(srcid):
-    source_code = SourceCode.query.get(srcid)
-    if not source_code:
-        flash('Source code not found!', 'danger')
-        return redirect('/dashboard')
-    folder ="".join((source_code.name.split()))
-    zip_file = source_code.zip_file
-    extracted_path = unzip_src_code(zip_file, folder)
-    files = os.listdir(extracted_path)
-    for file in files:
-        if file.endswith('.py'):
-            print(f'path = {os.path.join(extracted_path, file)}')
-            report_path = analyze_code(os.path.join(extracted_path, file))
-            report = Report(source_code_id=srcid, report_path=report_path)
-            db.session.add(report)
-            db.session.commit()
-    source_code.status = 'Completed'
-    db.session.commit()
-    flash('Analysis completed successfully!', 'success')
-    return json.dumps({'status': 'success'})
-    
+
 # download report
 @app.route('/download/<int:id>')
 @login_required
@@ -187,6 +175,7 @@ def download(id):
         flash('Report not found!', 'danger')
         return redirect('/dashboard')
 
+
 # delete source code
 @app.route('/delete/<int:id>')
 @login_required
@@ -195,15 +184,7 @@ def delete(id):
         source_code = SourceCode.query.get(id)
         db.session.delete(source_code)
         db.session.commit()
-        # delete zip file
-        os.remove(source_code.zip_file)
-        # delete report files
-        reports = Report.query.filter_by(source_code_id=id).all()
-        for report in reports:
-            try:os.remove(report.report_path)
-            except:pass
-            db.session.delete(report)
-        db.session.commit()
+        shutil.rmtree(os.path.join(app.config['SRC_FOLDER'], source_code.name))
         flash('Source code deleted successfully!', 'success')
         return redirect('/dashboard')
     except Exception as e:
@@ -254,34 +235,20 @@ def view(id):
         return redirect('/dashboard')
 
 # view report
-@app.route('/report/<int:srcid>')
+@app.route('/view_report/<int:id>')
 @login_required
-def view_report(srcid):
+def view_report(id):
     try:
-        source_code = SourceCode.query.get(srcid)
-        reports = Report.query.filter_by(source_code_id=srcid).all() 
-        issues = ""
-        names = ""
-        for report in reports:
-            filename = report.report_path.split('\\')[-1]
-            report.filename = filename
-            with open(report.report_path, 'r') as f:
-                report.content = f.readlines()[2:-4]
-                report.issue_count = len(report.content)
-                issues+=f"{report.issue_count},"
-                names+=f"{filename},"
-
-        return render_template('report.html', 
-                               reports=reports, 
-                               source_code=source_code, 
-                               srcid=srcid,
-                               issues=issues, 
-                               names=names)
+        report = Report.query.get(id)
+        with open(report.report_path, 'r') as f:
+            content = f.read()
+        return render_template('view_report.html', content=content)
     except Exception as e:
         print(e)
         flash('Report not found!', 'danger')
         return redirect('/dashboard')
         
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

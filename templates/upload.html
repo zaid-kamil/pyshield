@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block head %}{% endblock %}
+{% block css %}{% endblock %}
+{% block content %}
+<div class="container col-xl-10 col-xxl-8 px-4 py-5">
+    <div class="row align-items-center g-lg-5 py-5">
+
+        <div class="col-md-10 mx-auto col-lg-5">
+            <form class="p-4 p-md-5 border rounded-3 bg-body-tertiary" method="post" action="/upload"
+                enctype="multipart/form-data">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="floatingInput" placeholder="Task Names" name="name">
+                    <label for="floatingInput">
+                        <i class="fas fa-tasks"></i>
+                        Name of Project
+                    </label>
+                    <small class="text-muted">This will be used to identify your project</small>
+                </div>
+                <div class="mb-3">
+                    <input type="file" class="form-control form-control-lg" name="zip_file" id="zip_file"
+                        placeholder="Upload source code" aria-describedby="fileHelpId" />
+                    <div id="fileHelpId" class="form-text">
+                        Upload your source code as a zip file
+                    </div>
+                </div>
+
+
+
+                <button class="w-100 btn  btn-primary" type="submit">
+                    <i class="fas fa-upload"></i>
+                    Upload Source Code
+                </button>
+                <hr class="my-4">
+                <small class="text-muted">
+                    <a href="/report" class="text-decoration-none">View Your Reports</a>
+                </small>
+            </form>
+        </div>
+        <div class="col-lg-7 text-center text-lg-start">
+            <h1 class="display-4 fw-bold lh-1 text-body-emphasis mb-3">
+                Upload your source code
+            </h1>
+            <p class="col-lg-10 fs-4">
+                upload your source code and remove unwanted code from your codebase.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block js %}{% endblock %}

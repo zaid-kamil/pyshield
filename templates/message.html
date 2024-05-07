@@ -1,0 +1,18 @@
+<!-- flash message as alert box -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show rounded-0 text-center py-1 my-0" role="alert">
+    <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+    <strong>Notification</strong> {{ message }}
+</div>
+<script>
+    var alertList = document.querySelectorAll(".alert");
+    alertList.forEach(function (alert) {
+        new bootstrap.Alert(alert);
+    });
+</script>
+
+{% endfor %}
+{% endif %}
+{% endwith %}

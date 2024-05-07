@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block head %}{% endblock %}
+{% block css %}{% endblock %}
+{% block content %}
+
+<div class="container col-xl-10 col-xxl-8 px-4 py-5">
+    <div class="row align-items-start g-lg-5 ">
+        <!-- display source code from database-->
+        <div class="col sticky-top">
+            <div class="bd-example-snippet bd-code-snippet">
+                <div class="bd-example m-0 border-0">
+                    <table class="table table-sm table-hover text-center border border-dark">
+                        <thead>
+                            <tr>
+                                <th scope="col">#no</th>
+                                <th scope="col">report path</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Issues Scanned</th>
+                            </tr>
+                        </thead>
+                        {% if reports %}
+                        <tbody>
+                            {% for item in reports %}
+                            <tr>
+                                <th scope="row">
+                                    {{ loop.index }}
+                                </th>
+                                <td class="text-start">
+                                    <i class="fas fa-file-text"></i> {{ item.filename }}
+                                </td>
+                                <td>{{ item.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                <td class="fw-bold fs-5 ">
+                                    {% if item.issue_count %}
+                                    <span class="badge">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        {{ item.issue_count }} issues
+                                    </span>
+                                    {% else %}
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    0 issues
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% else %}
+                        <tbody>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="alert alert-warning">
+                                        No source code uploaded yet, please upload your source code
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                        {% endif %}
+                    </table>
+
+                </div>
+            </div>
+        </div>
+        <!-- display report from database-->
+        <div class="col">
+            <h2 class="text-center">Reports</h2>
+            <small class="text-center">files with code issues</small>
+            <div class="accordion" id="linesAccordian">
+                {% for report in reports %}
+                <div class="accordion accordion-flush" id="filesaccordian">
+                    {% if report.content %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{loop.index}}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#content{{loop.index}}" aria-expanded="true"
+                                aria-controls="content{{loop.index}}">
+                                <i class="fas fa-file-text"></i>&nbsp;{{report.filename}}
+                            </button>
+                        </h2>
+                        <div id="content{{loop.index}}" class="accordion-collapse collapse"
+                            aria-labelledby="heading{{loop.index}}" data-bs-parent="#filesaccordian">
+                            <div class="accordion-body">
+                                <table class="table ">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Line Number</th>
+                                            <th>Column</th>
+                                            <th>Message</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tbody>
+                                        {% for line in report.content %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td>{{ line.split(':')[1] }}</td>
+                                            <td>{{ line.split(':')[2] }}</td>
+                                            <td>{{ line.split(':')[4] }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div>
+            <canvas id="myChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('myChart');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: `{{names|safe}}`.split(','),
+            datasets: [{
+                label: '# of Issues in source code',
+                data: `{{issues}}`.split(','),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+</script>
+{% endblock %}

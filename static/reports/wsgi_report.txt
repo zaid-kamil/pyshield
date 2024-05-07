@@ -1,0 +1,6 @@
+************* Module wsgi
+static\temp\Democode\wsgi.py:12:0: E0401: Unable to import 'django.core.wsgi' (import-error)
+
+------------------------------------------------------------------
+Your code has been rated at 0.00/10 (previous run: 0.00/10, +0.00)
+

@@ -1,0 +1,7 @@
+************* Module urls
+static\temp\Democode\urls.py:16:0: E0401: Unable to import 'django.contrib' (import-error)
+static\temp\Democode\urls.py:17:0: E0401: Unable to import 'django.urls' (import-error)
+
+------------------------------------------------------------------
+Your code has been rated at 0.00/10 (previous run: 0.00/10, +0.00)
+

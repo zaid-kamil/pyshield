@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block head %}{% endblock %}
+{% block css %}{% endblock %}
+{% block content %}
+<div class="container col-xl-10 col-xxl-8 px-4 pt-5">
+    <div class="row align-items-center g-lg-5 py-5">
+
+        <div class="col-md-10 mx-auto col-lg-5">
+            <form class="p-4 p-md-5 border rounded-3 bg-body-tertiary" method="post" action="/upload"
+                enctype="multipart/form-data">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="floatingInput" placeholder="Task Names" name="name">
+                    <label for="floatingInput">
+                        <i class="fas fa-tasks"></i>
+                        Name of Project
+                    </label>
+                    <small class="text-muted">This will be used to identify your project</small>
+                </div>
+                <div class="mb-3">
+                    <input type="file" class="form-control form-control-lg" name="zip_file" id="zip_file"
+                        placeholder="Upload source code" aria-describedby="fileHelpId" />
+                    <div id="fileHelpId" class="form-text">
+                        Upload your source code as a zip file
+                    </div>
+                </div>
+
+
+
+                <button class="w-100 btn  btn-primary" type="submit">
+                    <i class="fas fa-upload"></i>
+                    Upload Source Code
+                </button>
+                <hr class="my-4">
+                <small class="text-muted">
+                    <a href="/report" class="text-decoration-none">View Your Reports</a>
+                </small>
+            </form>
+        </div>
+        <div class="col-lg-7 text-center text-lg-start">
+            <h1 class="display-4 fw-bold lh-1 text-body-emphasis mb-3">
+                Upload your source code
+            </h1>
+            <p class="col-lg-10 fs-4">
+                upload your source code and remove unwanted code from your codebase.
+            </p>
+        </div>
+    </div>
+</div>
+<div class="container col-xl-10 col-xxl-8 px-4 ">
+    <div class="row align-items-center g-lg-5 ">
+        <!-- display source code from database-->
+        <div class="col">
+            <div class="bd-example-snippet bd-code-snippet">
+                <div class="bd-example m-0 border-0">
+
+                    <table class="table table-sm table-hover text-center border border-dark">
+                        <thead>
+                            <tr>
+                                <th scope="col">#no</th>
+                                <th scope="col">Project</th>
+                                <th scope="col">File</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">State</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        {% if source_codes %}
+                        <tbody>
+                            {% for item in source_codes %}
+                            <tr>
+                                <th scope="row">{{ item.id }}</th>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.zip_file }}</td>
+                                <td>{{ item.date }}</td>
+                                <td>
+                                    {% if item.status == 'Completed' %}
+                                    <span class="badge bg-success">{{item.status}}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{item.status}}</span>
+                                    {% endif %}
+
+                                </td>
+                                <td>
+                                    {% if item.status == 'Completed' %}
+                                    <a href="/report/{{ item.id }}" class="btn btn-sm btn-primary">View Report</a>
+                                    {% else %}
+                                    <a href="/analyse/{{ item.id }}" class="btn btn-sm btn-info btn-analyse">Analyse</a>
+                                    {% endif %}
+                                    <a href="/delete/{{ item.id }}" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% else %}
+                        <tbody>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="alert alert-warning">
+                                        No source code uploaded yet, please upload your source code
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                        {% endif %}
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block js %}
+<script>
+    $(document).ready(function () {
+        $('.btn-analyse').each(function () {
+            $(this).click(function (e) {
+                // display spinner inplace of text
+                $(this).html('<i class="fas fa-spinner fa-spin"></i>');
+                e.preventDefault();
+                let url = $(this).attr('href');
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function (data) {
+                        console.log(data);
+                        location.reload();
+                    },
+                    error: function (error) {
+                        console.log(error);
+                        alert('An error occurred');
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}
